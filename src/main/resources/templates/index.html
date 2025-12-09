@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Order Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+<div class="container mt-5">
+
+    <h2>Spring Boot Payment Gateway</h2>
+
+    <form id="orderForm">
+        <table class="table">
+
+            <tr>
+                <td>Name:</td>
+                <td>
+                    <input type="text" id="name" class="form-control" required>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Email:</td>
+                <td>
+                    <input type="email" id="email" class="form-control" required>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Phone Number:</td>
+                <td>
+                    <input type="tel" id="phno" class="form-control" required>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Select Course:</td>
+                <td>
+                    <select id="course" class="form-select" required>
+                        <option value="">-- Select Course --</option>
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="Web Development">Web Development</option>
+                        <option value="Data Science">Data Science</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Amount:</td>
+                <td>
+                    <input type="number" id="amount" class="form-control" required>
+                </td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit" id="payBtn" class="btn btn-primary">
+                        Proceed To Pay
+                    </button>
+                </td>
+            </tr>
+
+        </table>
+    </form>
+
+</div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+async function createOrder() {
+
+    console.log("--- order creation started ---");
+
+    const response = await fetch("http://localhost:8085/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            phno: document.getElementById("phno").value,
+            course: document.getElementById("course").value,
+            amount: document.getElementById("amount").value,
+            currency: "INR"
+        })
+    });
+
+    const order = await response.json();
+    console.log("--- order creation completed ---");
+    console.log(order);
+    return order;
+}
+
+document.getElementById("payBtn").onclick = async function(e) {
+    e.preventDefault();  // STOP FORM RELOAD
+    const order = await createOrder();
+    console.log(order);
+	
+	var options={
+
+		"key":"rzp_test_RiJvTBhUsf2ARF",
+		"amount":order.amount,
+		"currency": "INR",
+		"name":"Dhiraj",
+		"description":"course payment",
+		"order_id": order.razorpayOrderId,
+		"receipt": order.email,
+		"callback_url":"http://localhost:8085/handle-payment-callback",
+		"prefill":{
+			"name": order.name,
+			"email": order.email,
+			"contact": order.phno,
+		},
+		"theme":{
+			"color":"#3399cc"
+		}
+
+	};
+
+	var rzp1=new Razorpay(options);
+	rzp1.open();
+	e.preventDefault();
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
